@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { margin: 0; background: #f1f1ef; }
+a { text-decoration: none; color: inherit; }
+* { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+img, svg { max-width: 100%; }
+:focus-visible { outline: 2px solid #5f7a12; outline-offset: 2px; border-radius: 4px; }
+
+/* hero animations (ported from the design) */
+@keyframes sx-grid { from { background-position: 0 0, 0 0 } to { background-position: 46px 46px, 46px 46px } }
+@keyframes sx-sweep { 0% { transform: translateX(-80%) skewX(-12deg); opacity: 0 } 25% { opacity: 1 } 100% { transform: translateX(360%) skewX(-12deg); opacity: 0 } }
+@keyframes sx-dot { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .45; transform: scale(1.35) } }
+@keyframes sx-breathe { 0%,100% { opacity: .45 } 50% { opacity: .26 } }
+@keyframes sx-blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+.herogrid { animation: sx-grid 9s linear infinite; }
+.herosweep { animation: sx-sweep 7s ease-in-out infinite; }
+.herodot { animation: sx-dot 2.4s ease-in-out infinite; }
+.heroscene { animation: sx-breathe 6s ease-in-out infinite; }
+.sx-caret { animation: sx-blink 1.05s steps(1) infinite; }
+
+.navlink { transition: color .15s ease; padding-bottom: 3px; border-bottom: 2px solid transparent; }
+.navlink:hover { color: #f4f3f0; }
+.navlink[aria-current="page"] { color: #f4f3f0; border-bottom-color: #bdf23c; }
+.btn-x { transition: filter .15s ease, transform .05s ease; }
+.btn-x:hover { filter: brightness(1.06); }
+.btn-x:active { transform: translateY(1px); }
+.step-row { transition: background .15s ease; }
+.step-row:hover { background: #fafafa; }
+
+/* Docs tabs — CSS-only (no JS). Inputs are sr-only (still keyboard-focusable). */
+.dn { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.docs-nav label { display: block; cursor: pointer; color: #4a535d; font-size: 14.5px; padding: 6px 11px; border-radius: 8px; border-left: 2px solid transparent; transition: background .15s ease, color .15s ease; }
+.docs-nav label:hover { color: #0e0e10; background: #efeee9; }
+.docs-sec { display: none; }
+#n1:checked ~ .docs-wrap [data-sec="1"], #n2:checked ~ .docs-wrap [data-sec="2"], #n3:checked ~ .docs-wrap [data-sec="3"], #n4:checked ~ .docs-wrap [data-sec="4"], #n5:checked ~ .docs-wrap [data-sec="5"], #n6:checked ~ .docs-wrap [data-sec="6"], #n7:checked ~ .docs-wrap [data-sec="7"], #n8:checked ~ .docs-wrap [data-sec="8"], #n9:checked ~ .docs-wrap [data-sec="9"], #n10:checked ~ .docs-wrap [data-sec="10"], #n11:checked ~ .docs-wrap [data-sec="11"], #n12:checked ~ .docs-wrap [data-sec="12"] { display: block; }
+#n1:checked ~ .docs-wrap [data-nav="1"], #n2:checked ~ .docs-wrap [data-nav="2"], #n3:checked ~ .docs-wrap [data-nav="3"], #n4:checked ~ .docs-wrap [data-nav="4"], #n5:checked ~ .docs-wrap [data-nav="5"], #n6:checked ~ .docs-wrap [data-nav="6"], #n7:checked ~ .docs-wrap [data-nav="7"], #n8:checked ~ .docs-wrap [data-nav="8"], #n9:checked ~ .docs-wrap [data-nav="9"], #n10:checked ~ .docs-wrap [data-nav="10"], #n11:checked ~ .docs-wrap [data-nav="11"], #n12:checked ~ .docs-wrap [data-nav="12"] { color: #3f4e14; font-weight: 600; background: #f0f5df; border-left-color: #bdf23c; }
+.dn:focus-visible ~ .docs-wrap [data-nav="11"] { outline: 2px solid #5f7a12; outline-offset: 2px; }
+
+/* FAQ accordion (native <details>) */
+summary { list-style: none; cursor: pointer; }
+summary::-webkit-details-marker { display: none; }
+.faq-ic { transition: transform .2s ease; }
+details[open] .faq-ic { transform: rotate(45deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .herogrid, .herosweep, .herodot, .heroscene, .sx-caret, .faq-ic { animation: none !important; transition: none !important; }
+}
