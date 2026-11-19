@@ -41,9 +41,4 @@ and `vercel.json` (Vercel).
   (a static-export requirement). The site takes no user input, so the XSS surface
   is effectively nil; tighten to per-build hashes if your host supports it.
 
-## SEO
-
-Per-page `<title>`/description, canonical URLs, Open Graph + Twitter cards,
-semantic headings, `lang="en"`, generated `robots.txt` and `sitemap.xml`.
-
 Built by Imeer.ai · imeerai · MIT.
