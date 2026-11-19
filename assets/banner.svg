@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="Sentrion">
+  <defs>
+    <clipPath id="r"><rect width="1200" height="320" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="1200" height="320" fill="#0a0b0e"/>
+    <!-- faint terminal scene -->
+    <g font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#3f5a28" opacity="0.5">
+      <text x="24" y="34">$ sentrion npm install express</text>
+      <text x="24" y="60">scan   31 packages   ok malware   ok age   ok names</text>
+      <text x="24" y="86">watch  0 events outside the allowlist</text>
+      <text x="24" y="112">ALLOW  install complete   0 prompts   0.4s</text>
+      <text x="24" y="138">$ sentrion python3 take-home.py</text>
+      <text x="24" y="164">x FILE-01  read ~/.ssh/id_rsa   denied</text>
+      <text x="24" y="190">x NET-05   connect 203.0.113.7   denied</text>
+      <text x="24" y="216">incident 7f3a-02 written   nothing left the machine</text>
+      <text x="24" y="268">$ sentrion node server.js</text>
+      <text x="24" y="294">guard on   prompt mode   watching process tree</text>
+    </g>
+    <!-- left fade so wordmark reads clean -->
+    <rect width="1200" height="320" fill="url(#g)"/>
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0.28" stop-color="#0a0b0e" stop-opacity="0.2"/>
+      <stop offset="0.55" stop-color="#0a0b0e" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#0a0b0e" stop-opacity="0.9"/>
+    </linearGradient></defs>
+    <!-- shield -->
+    <g transform="translate(470,104)">
+      <path d="M56 4 L104 20 V64 C104 95 83 112 56 120 C29 112 8 95 8 64 V20 Z" fill="none" stroke="#bdf23c" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M34 62 L52 80 L82 44" fill="none" stroke="#f4f3f0" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <!-- wordmark -->
+    <text x="610" y="168" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="800" letter-spacing="-3">
+      <tspan fill="#f4f3f0">SENTRI</tspan><tspan fill="#bdf23c">ON</tspan>
+    </text>
+    <text x="612" y="214" font-family="Arial, Helvetica, sans-serif" font-size="25" fill="#aeb0b6">A live guard for every install and script you run.</text>
+    <text x="612" y="252" font-family="ui-monospace, Menlo, monospace" font-size="19"><tspan fill="#8fd85a">$</tspan> <tspan fill="#c5c7cd">sentrion npm install express</tspan></text>
+  </g>
+</svg>

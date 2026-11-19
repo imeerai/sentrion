@@ -1,290 +1,134 @@
-# Sentrion
-
 <div align="center">
 
-[![Live Website](https://img.shields.io/badge/Live%20Website-Visit%20Sentrion-bdf23c?style=for-the-badge&logo=vercel&logoColor=0a0b0e)](https://sentrion-seven.vercel.app/)
-[![Documentation](https://img.shields.io/badge/Documentation-Read%20the%20manual-0a0b0e?style=for-the-badge)](https://sentrion-seven.vercel.app/docs/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+<img src="assets/banner.svg" alt="Sentrion" width="100%" />
+
+<br/>
+
+**A command-line security guard for developers.** Put `sentrion` in front of any command and it scans, watches and blocks malicious install scripts, credential theft, backdoors and privilege escalation, with a Kill / Allow prompt and a readable incident report.
+
+[![npm](https://img.shields.io/npm/v/sentrion?style=flat-square&color=bdf23c&label=sentrion)](https://www.npmjs.com/package/sentrion)
+[![license](https://img.shields.io/badge/license-MIT-555?style=flat-square)](LICENSE)
+[![node](https://img.shields.io/badge/node-%E2%89%A518-3f6e24?style=flat-square)](https://nodejs.org)
+[![dependencies](https://img.shields.io/badge/dependencies-0-success?style=flat-square)](package.json)
+[![platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-2b7fff?style=flat-square)](#platform-notes)
+[![downloads](https://img.shields.io/npm/dm/sentrion?style=flat-square&color=888)](https://www.npmjs.com/package/sentrion)
+
+<br/>
+
+**Zero third-party dependencies, one Node.js file.** The tool you install to vet other packages brings no supply chain of its own.
 
 </div>
 
-**Guard every install you ever run.** Sentrion wraps a command, inspects the package, and watches the process tree to stop malicious install scripts, credential theft, backdoors, persistence changes, and outbound exfiltration — live, with zero runtime dependencies.
+> [!IMPORTANT]
+> Sentrion is an early public release. Base mode needs no root and runs anywhere Node does. It is a safety net, not full OS or container isolation: see [Scope and limitations](#scope-and-limitations) for what it does and does not cover. Found a gap? Please [open an issue](https://github.com/imeerai/sentrion/issues).
 
-```bash
-npm install -g sentrion
-sentrion npm install express
-```
+## The problem
 
-<div align="center">
-  <img src=".github/assets/sentrion-home.png" alt="Sentrion website homepage" width="100%">
-</div>
-
-## Why Sentrion
-
-Package installation is remote code execution. A package can run code before you review it, and a trusted dependency can become malicious in a future update.
-
-Sentrion treats installation as a checkpoint:
-
-- **Stops before it starts** - scans malware, publish age, typosquats, and newly added install scripts.
-- **Watches while it runs** - observes Node and Python files, processes, child processes, and network activity.
-- **Shows the evidence** - names the exact rule that fired instead of presenting a vague risk score.
-- **Fails safely** - ends the command and process tree in Kill mode, or blocks unattended commands in CI and servers.
-- **Keeps the machine private** - runs locally and sends no source code or secrets to a remote service.
-
-<div align="center">
-  <img src=".github/assets/sentrion-docs.png" alt="Sentrion documentation website" width="100%">
-</div>
-
-## What Sentrion does
-
-Every command you run may execute code you have never read. Sentrion adds a security checkpoint around that command and handles it in four stages:
-
-1. **Pre-flight scan** - checks known malware, package publish age, typosquat names, and newly introduced install scripts.
-2. **Runtime watch** - observes the process tree and Node and Python file, process, and network activity.
-3. **Decision** - freezes a risky action and presents a clear `Kill`, `Allow once`, or `Trust` choice.
-4. **Incident report** - records the attack chain and can export its evidence as JSON or SARIF.
-
-Clean commands continue normally. Risky commands stop without a vague score; Sentrion names the exact rule that triggered.
-
-## Install
-
-Sentrion is a Node.js CLI with zero runtime dependencies. It requires Node.js 18 or newer and can run on Linux, macOS, and Windows.
-
-```bash
-npm install -g sentrion
-```
-
-Other supported package managers:
-
-```bash
-pnpm add -g sentrion
-yarn global add sentrion
-bun add -g sentrion
-```
-
-If `sentrion` is not on your `PATH`, use `npx sentrion` or add npm's global binary directory:
-
-```bash
-export PATH="$(npm config get prefix)/bin:$PATH"
-```
-
-Add the export line to `~/.bashrc` or `~/.zshrc` to keep it for future terminal sessions.
+Every `npm install` runs code you have never read. A single malicious install script can read your SSH keys, exfiltrate an npm token, or open a backdoor before the install even finishes, and turning install scripts off just moves the trigger to the first time you run the package. Sentrion sits in front of the command, watches what the code actually does, and stops the risky part while letting clean code run normally.
 
 ## Quick start
 
-Prefix any command with `sentrion`:
+Install it once, globally:
+
+```bash
+npm install -g sentrion
+```
+
+Then put `sentrion` in front of any command you run:
 
 ```bash
 sentrion npm install express
-sentrion pnpm add zod
+sentrion pip install requests
+sentrion node server.js
 sentrion python3 app.py
-sentrion node build.js
 ```
 
-Check the security capabilities available on the current machine:
+Check it is working:
 
 ```bash
+sentrion --version
 sentrion doctor
 ```
 
-Scan a package without installing it:
+<div align="center">
+<img src="assets/demo.gif" alt="Sentrion pausing and blocking a malicious postinstall script" width="92%" />
+</div>
 
-```bash
-sentrion scan left-pad
-```
+> **`sentrion: command not found`?** After a global install this means npm's global bin folder is not on your `PATH` (common on Debian and Kali). Add it once with `export PATH="$(npm config get prefix)/bin:$PATH"`, put that line in your `~/.bashrc` or `~/.zshrc`, then open a new terminal.
 
-View the latest incident report:
+## How it works
 
-```bash
-sentrion report --last
-```
+Sentrion wraps your command and watches it on two levels at once:
 
-Export a SARIF report:
+- **In-process hooks** load inside Node (`--require`) and Python (an audit hook via `sitecustomize`), so it sees file reads, network calls and spawns from within the runtime, before they complete.
+- **Process-tree sensors** read `/proc` to follow every child the command starts, and can pause or kill the whole process group.
 
-```bash
-sentrion report --sarif
-```
-
-For the complete command reference, run:
-
-```bash
-sentrion --help
-```
-
-## Guards and package managers
-
-Sentrion can guard installs from npm, pnpm, Yarn, Bun, pip, uv, and poetry. It also watches commands and child processes written for Node and Python.
-
-At runtime, it can detect and stop actions such as:
-
-- shells and download-then-execute chains started by install scripts
-- reads from SSH keys, AWS credentials, npm configuration, keychains, and wallets
-- writes into packages, Git hooks, or CI configuration
-- persistence changes and reverse shells
-- uploads to paste services, raw IP addresses, or chat webhooks
-- package publishing or repository creation initiated by a dependency
-
-The complete default pre-flight and runtime rule set is documented on the [Rules page](https://sentrion-seven.vercel.app/rules/).
+When something risky happens, it pauses and shows you the evidence: which package, which rule, and the exact chain of events. You press **K** to kill, **A** to allow once, or **P** to trust that package. Every decision is written to an incident report you can read later or export as SARIF for CI.
 
 ## Modes
 
-Choose a mode for one run with `--mode`, or set a default in a policy file:
-
-| Mode | Behaviour |
-| --- | --- |
-| `prompt` | Pause and ask with `Kill`, `Allow once`, or `Trust`. This is the default for interactive machines. |
-| `enforce` | Block by policy without waiting for a prompt. Recommended for servers and CI. |
-| `audit` | Log activity without blocking it. Useful for observing existing installs. |
-| `learn` | Record observed behaviour and propose allow rules. |
+| Mode      | Behavior                                                             |
+| --------- | -------------------------------------------------------------------- |
+| `prompt`  | Pause on a risky event and ask: kill, allow once, or trust (default) |
+| `enforce` | Apply the policy and block without asking (servers, CI)              |
+| `audit`   | Record risky events without blocking them                            |
+| `learn`   | Record normal behavior and propose trust rules                       |
 
 ```bash
-sentrion --mode enforce npm ci
-sentrion --mode audit npm install
-sentrion --mode learn npm install
+sentrion --mode enforce npm install express   # one command
+sentrion mode enforce                          # set the default
+sentrion --ci npm install                      # non-interactive CI run
 ```
 
-For CI and servers with no interactive user:
+## Common commands
 
 ```bash
-npx sentrion --mode enforce npm ci
+sentrion scan express@4.21.2     # inspect a package, nothing runs
+sentrion scan .                  # inspect this repo or clone
+sentrion report --last           # what happened and why it was stopped
+sentrion report <id> --format sarif
+sentrion rules                   # the full rule set
+sentrion trust esbuild@^0.20     # allow one package's scripts, pinned
+sentrion policy show             # the effective, merged policy
+sentrion doctor                  # what your OS lets Sentrion see and block
 ```
 
-Pending prompts fail closed in CI.
+Run `sentrion --help` for the full list.
 
-## Kill, allow, or trust
+## What it catches
 
-When a rule fires, Sentrion presents:
+Across npm, pnpm, Yarn, Bun, pip, uv and poetry installs, and any command you run in Node or Python:
 
-```text
-[K] Kill
-[A] Allow once
-[T] Trust
-```
+- Install and lifecycle scripts that spawn a shell or reach the network
+- Reads of credentials and secrets (`~/.ssh`, `~/.aws`, `~/.npmrc` and more), with canary tokens in place of the real ones
+- Outbound connections to hosts outside the install allowlist
+- Suspicious packages by name (typosquats) and against a bundled malware list
 
-- **Kill** ends the command and its process tree immediately.
-- **Allow once** permits this action only for the current run.
-- **Trust** remembers the package, version range, and behaviour. A later package version or changed behaviour prompts again.
+## Scope and limitations
 
-## Always-on shell protection
+Sentrion is a practical safety net, not a sandbox, and it is honest about its edges:
 
-Load the shell hook to guard package-manager commands automatically:
+- It is not OS or container isolation. For untrusted code you do not control, run it in a VM or container as well.
+- The in-process hooks do not reach a child that deliberately strips `NODE_OPTIONS`, or Python started in isolated mode (`python -I`). The process-tree sensors still see such a child, but a fast action can finish before the next poll.
+- If the guard's own parent is `SIGKILL`ed, a detached child can survive.
+- The egress lock and deep (eBPF/auditd) mode need the privileged helper; base detection does not.
 
-```bash
-eval "$(sentrion shell-init)"
-```
+Run `sentrion doctor` to see exactly which controls your system supports.
 
-Add that line to `~/.zshrc` or `~/.bashrc` for a permanent setup. The shell hook also covers nested installs launched by build scripts.
+## Benchmark
 
-## Policy configuration
+On a small synthetic benchmark (Node and Python, Linux): 9 of 9 attack samples in the suite were caught, with 0 false alarms across 7 clean installs, at roughly 50 ms of added startup per command. These are indicative numbers from one machine, not a formal evaluation.
 
-Sentrion merges policies from two locations:
+## Platform notes
 
-1. `~/.sentrion/policy.json` - personal machine policy
-2. `./.sentrion.json` - project policy
-
-A project policy can make the guard stricter, but cannot loosen a personal policy.
-
-```json
-{
-  "mode": "enforce",
-  "allow": ["esbuild@^0.20"],
-  "deny": ["NET-*"]
-}
-```
-
-## Verify and troubleshoot
-
-| Problem | Resolution |
-| --- | --- |
-| `sentrion: command not found` | Use `npx sentrion`, or add npm's global binary directory to `PATH`. |
-| A trusted package asks again | Review the new evidence. Trust is version- and behaviour-specific. |
-| The doctor reports an optional egress helper | The helper provides kernel-level network hardening. Base mode still detects and kills outbound activity. |
-| npm triggers a file rule | File rules are intended for install scripts, not npm's normal reads. Run `sentrion doctor` if unexpected warnings persist. |
-| Nothing prompts in CI | Use `--mode enforce`; unattended prompts fail closed. |
-
-## Privacy
-
-Sentrion runs locally. It does not send source code or secrets to a remote service and does not require root or administrator access for normal detection and blocking. Optional hardening features may add a system helper for capabilities such as deeper kernel tracing or an egress lock.
-
-## This website
-
-This repository contains the public Sentrion Next.js website and documentation. It includes:
-
-- Home page and product overview
-- Interactive documentation for installation and usage
-- Default rule reference
-- FAQ and troubleshooting
-- Static export for Vercel or other static hosts
-
-### Technology
-
-- Next.js 16 App Router
-- React 19
-- Tailwind CSS 3
-- Static export
-- Zero runtime third-party scripts
-- One small client component for copying install commands
-
-The rest of the site is server-rendered or prerendered static HTML.
-
-## Develop
-
-Requirements: Node.js 18 or newer.
-
-```bash
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
-## Build
-
-Create a production static export:
-
-```bash
-npm run build
-```
-
-The deployable output is written to `out/`. The site can be hosted on Vercel, Netlify, Cloudflare Pages, GitHub Pages, or another static host.
-
-Vercel configuration is stored in `vercel.json`. Static host headers are also available in `public/_headers`.
-
-## Project structure
-
-```text
-app/
-  page.jsx         # Home page
-  docs/page.jsx    # Interactive documentation
-  rules/page.jsx   # Default rule reference
-  faq/page.jsx     # FAQ
-  layout.jsx       # Site metadata and CSP
-  globals.css      # Global styles and animations
-components/
-  SiteNav.jsx      # Main navigation
-  Masthead.jsx     # Page header
-  Footer.jsx       # Footer
-  CopyCmd.jsx      # Copy-install-command control
-public/
-  _headers         # Static hosting security headers
-  favicon.svg
-out/               # Generated static export
-```
+- Linux and macOS use process-tree monitoring.
+- Windows uses its available process and network controls.
+- Some firewall, administrative and deep-monitoring features need elevated permissions.
 
 ## Contributing
 
-Contributions are welcome for bug fixes, false-alarm reports, missing rules, documentation improvements, and website changes.
-
-```bash
-git clone https://github.com/imeerai/sentrion.git
-cd sentrion
-npm install
-npm test
-```
-
-The core project is MIT licensed and has a zero-dependency CLI. Keep security changes focused, reproducible, and covered by tests.
+Issues and pull requests are welcome at [github.com/imeerai/sentrion](https://github.com/imeerai/sentrion). Sentrion has zero third-party dependencies by design; please keep it that way.
 
 ## License
 
-MIT License. Copyright 2026 Imeer.ai / imeerai.
+MIT &copy; 2026 [imeerai](https://imeer.ai). See [LICENSE](LICENSE).
